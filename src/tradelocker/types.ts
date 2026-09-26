@@ -1,0 +1,3 @@
+export type TlOrder = { orderId: string; positionId?: string; instrumentId?: string; symbol: string; side: 'BUY' | 'SELL'; orderType: string; status: string; entry?: number; fillPrice?: number; stopLoss?: number; takeProfit?: number; volume?: number; createdAt?: string; updatedAt?: string };
+export type TlPosition = { positionId: string; openOrderId?: string; symbol: string; side: 'BUY' | 'SELL'; entry: number; stopLoss?: number; takeProfit?: number; volume?: number; openedAt?: string; realizedPnl?: number; closePrice?: number; closedAt?: string; closeReason?: string };
+export type TlSnapshot = { orders: TlOrder[]; positions: TlPosition[]; closedOrders: TlOrder[] };
