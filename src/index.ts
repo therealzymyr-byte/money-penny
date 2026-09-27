@@ -38,7 +38,8 @@ async function addPremiumPanel() {
   const channel=guild?.channels.cache.find(c=>c.name==='general'&&c.isTextBased()) as any;
   if(!channel?.messages)return;
   const messages=await channel.messages.fetch({limit:50});
-  if(messages.find((m:any)=>m.author.id===client.user?.id&&m.embeds[0]?.title==='Premium Membership'))return;
+  const existing=messages.find((m:any)=>m.author.id===client.user?.id&&m.embeds[0]?.title==='Premium Membership');
+  if(existing){await existing.pin().catch(()=>undefined);return;}
   const message=await channel.send({
     embeds:[new EmbedBuilder().setColor(0x2b6cb0).setTitle('Premium Membership').setDescription('Unlock Premium channels and private educational chart analysis. $25/week. Cancel through Stripe anytime. Educational only — not financial advice or guaranteed outcomes.')],
     components:[new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId('premium_join').setStyle(ButtonStyle.Primary).setLabel('Join Premium — $25/week'))]
