@@ -14,6 +14,7 @@ export const config = {
   liveChannelId: process.env.DISCORD_LIVE_CHANNEL_ID || process.env.LIVE_CHANNEL_ID || '',
   liveAlertChannelId: process.env.DISCORD_LIVE_NOTIFICATION_CHANNEL_ID || process.env.LIVE_ALERT_CHANNEL_ID || '',
   liveAlertRoleId: process.env.DISCORD_LIVE_ALERT_ROLE_ID || process.env.LIVE_ALERT_ROLE_ID || '',
+  liveMentionEveryone: process.env.DISCORD_LIVE_MENTION_EVERYONE === 'true',
   streamDestinationUrl: process.env.STREAM_DESTINATION_URL || '',
   streamManagerRoleId: process.env.DISCORD_STREAM_MANAGER_ROLE_ID || '',
   sendStreamEndNotification: process.env.SEND_STREAM_END_NOTIFICATION === 'true',
@@ -23,7 +24,7 @@ export const config = {
   obsPassword: process.env.OBS_WS_PASSWORD || '',
   premiumRoleId: process.env.PREMIUM_ROLE_ID || '', premiumRoleName: process.env.PREMIUM_ROLE_NAME || 'Premium Member',
   premiumDailyLimit: Number(process.env.PREMIUM_DAILY_ANALYSIS_LIMIT || 10), premiumMonthlyLimit: Number(process.env.PREMIUM_MONTHLY_ANALYSIS_LIMIT || 200), premiumCooldownSeconds: Number(process.env.AI_ANALYSIS_COOLDOWN_SECONDS || 30), maxChartImageMb: Number(process.env.MAX_CHART_IMAGE_MB || 10),
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY || '', stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '', stripePremiumPriceId: process.env.STRIPE_PREMIUM_PRICE_ID || '', stripeSuccessUrl: process.env.STRIPE_SUCCESS_URL || '', stripeCancelUrl: process.env.STRIPE_CANCEL_URL || '',
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY || '', stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '', stripePremiumPriceId: process.env.STRIPE_PREMIUM_PRICE_ID || '', stripeSuccessUrl: process.env.STRIPE_SUCCESS_URL || 'https://day-trading-bootcamp.therealzymyr.chatgpt.site/?checkout=success', stripeCancelUrl: process.env.STRIPE_CANCEL_URL || 'https://day-trading-bootcamp.therealzymyr.chatgpt.site/?checkout=cancel',
   // Hosting providers such as Render provide PORT; use it for the webhook server.
   stripeWebhookPort: Number(process.env.PORT || process.env.STRIPE_WEBHOOK_PORT || 8787),
 };
