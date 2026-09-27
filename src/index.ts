@@ -22,9 +22,34 @@ const liveRepo = new LiveRepository(config.databasePath);
 const obs = new ObsService();
 const premiumRepo = new PremiumRepository(config.databasePath);
 await signals.load();
+
+async function showPremium(interaction:any) {
+  try {
+    const url=await createCheckout(interaction.user.id);
+    return interaction.editReply({content:'💎 Premium Membership — secure checkout through Stripe.',components:[new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(url).setLabel('GET PREMIUM'))]});
+  } catch (error) {
+    console.error('Premium checkout failed:',error);
+    return interaction.editReply('⚠️ Premium checkout is temporarily unavailable.');
+  }
+}
+
+async function addPremiumPanel() {
+  const guild=client.guilds.cache.get(config.guildId);
+  const channel=guild?.channels.cache.find(c=>c.name==='general'&&c.isTextBased()) as any;
+  if(!channel?.messages)return;
+  const messages=await channel.messages.fetch({limit:50});
+  if(messages.find((m:any)=>m.author.id===client.user?.id&&m.embeds[0]?.title==='Premium Membership'))return;
+  const message=await channel.send({
+    embeds:[new EmbedBuilder().setColor(0x2b6cb0).setTitle('Premium Membership').setDescription('Unlock Premium channels and private educational chart analysis. $25/week. Cancel through Stripe anytime. Educational only — not financial advice or guaranteed outcomes.')],
+    components:[new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId('premium_join').setStyle(ButtonStyle.Primary).setLabel('Join Premium — $25/week'))]
+  });
+  await message.pin();
+}
+
 client.once(Events.ClientReady, ready => {
   console.log(`Connected as ${ready.user.tag} for ${config.communityName}`); startMarketScheduler(client, marketRepo); startStripeWebhook(premiumRepo,client);
   void refreshLiveMessage(client, liveRepo).catch(error => console.error('Live status refresh failed:', error.message));
+  void addPremiumPanel().catch(error=>console.error('Premium panel failed:',error));
   obs.start();
 });
 obs.onStreamChange = status => {
@@ -33,6 +58,7 @@ obs.onStreamChange = status => {
 };
 setupScreenshotWorkflow(client, screenshotSignals);
 client.on(Events.InteractionCreate, async interaction => {
+  if(interaction.isButton()&&interaction.customId==='premium_join'){await interaction.deferReply({ephemeral:true});return void await showPremium(interaction);}
   if (!interaction.isChatInputCommand()) return;
   if (interaction.commandName === 'signal') return void await handleSignal(interaction, signals);
   if (interaction.commandName === 'markets') return void await interaction.reply({embeds:[marketsEmbed()]});
@@ -40,7 +66,7 @@ client.on(Events.InteractionCreate, async interaction => {
   if (interaction.commandName === 'market') return void await interaction.reply({embeds:[marketEmbed(interaction.options.getString('symbol',true))]});
   if (interaction.commandName === 'timezone') { const tz=interaction.options.getString('zone',true); marketRepo.timezone(interaction.user.id,tz); return void await interaction.reply({content:`Your market-timezone preference is set to **${tz}**.`,ephemeral:true}); }
   if (interaction.commandName === 'alerts') { const p=marketRepo.preferences(interaction.user.id); return void await interaction.reply({content:`🔔 Your market alerts\nForex: ${p.forex_alerts_enabled?'ON':'OFF'} • Open: ${p.open_alerts_enabled?'ON':'OFF'} • Close: ${p.close_alerts_enabled?'ON':'OFF'} • 60/30/15: ${p.alert_60_enabled?'ON':'OFF'}/${p.alert_30_enabled?'ON':'OFF'}/${p.alert_15_enabled?'ON':'OFF'}\nTimezone: ${p.timezone}`,ephemeral:true}); }
-  if (interaction.commandName === 'premium') { const m=premiumRepo.membership(interaction.user.id), active=premiumRepo.active(interaction.user.id); if(active)return void await interaction.reply({content:`💎 **PREMIUM MEMBERSHIP**\n🟢 Active${m?.current_period_end?` until <t:${Math.floor(new Date(m.current_period_end).getTime()/1000)}:D>`:''}\n\nUse /mychart to receive a private educational chart analysis.`,ephemeral:true});try{const url=await createCheckout(interaction.user.id);return void await interaction.reply({content:'💎 **PREMIUM MEMBERSHIP**\nUnlock private educational chart analysis. Payment is handled securely by Stripe.',components:[new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(url).setLabel('💎 GET PREMIUM'))],ephemeral:true});}catch{return void await interaction.reply({content:'💎 **PREMIUM MEMBERSHIP**\n🔒 Checkout is being configured. Please try again shortly.',ephemeral:true});} }
+  if(interaction.commandName==='premium'){await interaction.deferReply({ephemeral:true});return void await showPremium(interaction);}
   if (interaction.commandName === 'myanalysis') { const rows=premiumRepo.history(interaction.user.id); return void await interaction.reply({content:rows.length?`🤖 **MY PRIVATE ANALYSIS HISTORY**\n${rows.map(r=>`#${r.id} • ${r.symbol||'Chart'} • ${r.timeframe||'Timeframe not detected'} • <t:${Math.floor(new Date(r.created_at).getTime()/1000)}:d>`).join('\n')}`:'🤖 No private analyses yet. Use `/mychart` with a chart screenshot.',ephemeral:true}); }
   if (interaction.commandName === 'mychart') { if(!premiumRepo.active(interaction.user.id)) return void await interaction.reply({content:'🔒 **PREMIUM FEATURE**\nPersonal AI Chart Analyzer is available only to active Premium members.',ephemeral:true}); const use=premiumRepo.canAnalyze(interaction.user.id); if(!use.ok)return void await interaction.reply({content:use.message,ephemeral:true}); const images=['chart','chart2','chart3'].map(n=>interaction.options.getAttachment(n)).filter((a):a is NonNullable<typeof a>=>Boolean(a)); if(images.some(a=>!['image/png','image/jpeg','image/webp'].includes(a.contentType||'')||a.size>config.maxChartImageMb*1024*1024))return void await interaction.reply({content:`Upload only PNG, JPG, JPEG, or WEBP images up to ${config.maxChartImageMb}MB.`,ephemeral:true}); await interaction.deferReply({ephemeral:true}); try{const text=await analyzeChart(images,interaction.options.getString('question'));premiumRepo.saveAnalysis(interaction.user.id,text);return void await interaction.editReply({content:`🤖 **PERSONAL AI CHART ANALYSIS**\n🔒 Private analysis\n\n${text}`.slice(0,1990)});}catch(error){console.error('Private chart analysis failed:',error instanceof Error?error.message:'unknown');return void await interaction.editReply('⚠️ I could not analyze that chart right now. Please try again.');} }
   const member = interaction.guild ? await interaction.guild.members.fetch(interaction.user.id).catch(() => null) : null;
