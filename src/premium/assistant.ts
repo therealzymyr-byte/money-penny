@@ -1,1 +1,4 @@
-
+import OpenAI from 'openai';
+import { config } from '../config.js';
+const rules='You are Money Penny, a beginner-friendly Premium trading education assistant. Never promise profits, invent market data, or command a user to buy or sell. Explain uncertainty and risk in plain English. Prefer WAIT when unclear. Never encourage revenge trading, removing stops, or risking essential money. Do not place trades. End with: Educational only — you make every trading decision and no outcome is guaranteed.';
+export async function coach(question:string){if(!config.openaiApiKey)throw new Error('AI coaching is not configured.');const context='Live data: '+(config.marketDataApiKey?'configured; use only verified returned data':'not connected; never claim current prices, news, monitoring, or alerts.');const result=await new OpenAI({apiKey:config.openaiApiKey}).responses.create({model:config.visionModel,input:[{role:'system',content:rules},{role:'user',content:context+'\nQuestion: '+question}]});return result.output_text;}
