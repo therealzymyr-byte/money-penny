@@ -10,11 +10,11 @@ import { LiveRepository } from './live/repository.js';
 import { refreshLiveMessage, setLiveStatus, staff, toggleLiveAlerts } from './live/discord.js';
 import { ObsService } from './live/obs.js';
 import { PremiumRepository } from './premium/repository.js';
-import { analyzeChart } from './premium/analyzer.js';
-import { createCheckout, startStripeWebhook } from './premium/stripe.js';
+import { analyzeChart } from './premium/analyzer.js';import { createCheckout, startStripeWebhook } from './premium/stripe.js';
+import { setupPrivateTickets } from './tickets/discord.js';
 
 requireDiscordConfig();
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });setupPrivateTickets(client);
 const signals = new SignalStore();
 const screenshotSignals = new ScreenshotSignalRepository(config.databasePath);
 const marketRepo = new MarketRepository(config.databasePath);
@@ -50,7 +50,7 @@ async function addPremiumPanel() {
 client.once(Events.ClientReady, ready => {
   console.log(`Connected as ${ready.user.tag} for ${config.communityName}`); startMarketScheduler(client, marketRepo); startStripeWebhook(premiumRepo,client);
   void refreshLiveMessage(client, liveRepo).catch(error => console.error('Live status refresh failed:', error.message));
-  void addPremiumPanel().catch(error=>console.error('Premium panel failed:',error));
+  // Premium signup panel disabled.
   obs.start();
 });
 obs.onStreamChange = status => {
