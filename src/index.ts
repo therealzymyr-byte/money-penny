@@ -11,17 +11,10 @@ import { refreshLiveMessage, setLiveStatus, staff, toggleLiveAlerts } from './li
 import { ObsService } from './live/obs.js';
 import { PremiumRepository } from './premium/repository.js';
 import { analyzeChart } from './premium/analyzer.js';import { createCheckout, startStripeWebhook } from './premium/stripe.js';
-import { setupPrivateTickets } from './tickets/discord.js';
-
-requireDiscordConfig();
+import { setupPrivateTickets } from './tickets/discord.js';console.log('Startup: imports loaded'); requireDiscordConfig();
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });setupPrivateTickets(client);
-const signals = new SignalStore();
-const screenshotSignals = new ScreenshotSignalRepository(config.databasePath);
-const marketRepo = new MarketRepository(config.databasePath);
-const liveRepo = new LiveRepository(config.databasePath);
-const obs = new ObsService();
-const premiumRepo = new PremiumRepository(config.databasePath);
-await signals.load();
+const signals = new SignalStore();console.log('Startup: screenshot repository'); const screenshotSignals = new ScreenshotSignalRepository(config.databasePath);console.log('Startup: market repository'); const marketRepo = new MarketRepository(config.databasePath);console.log('Startup: live repository'); const liveRepo = new LiveRepository(config.databasePath);
+const obs = new ObsService();console.log('Startup: premium repository'); const premiumRepo = new PremiumRepository(config.databasePath);console.log('Startup: reading signals'); await signals.load(); console.log('Startup: signals loaded');
 
 async function showPremium(interaction:any) {
   try {
